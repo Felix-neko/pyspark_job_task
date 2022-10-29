@@ -1,16 +1,22 @@
-# This is a sample Python script.
-
-# Press Alt+Shift+X to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+Shift+B to toggle the breakpoint.
+from pyspark.sql import SparkSession, DataFrame
+from functools import reduce
 
+if __name__ == "__main__":
+    spark = SparkSession.builder.getOrCreate()
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+    df1 = spark.read.csv("seclog/day_01.csv")
+    df2 = spark.read.csv("seclog/day_02.csv")
+    df3 = spark.read.csv("seclog/day_03.csv")
+    dfs = [df1, df2, df3]
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    df_complete = reduce(DataFrame.unionAll, dfs)
+
+    col_names = ["ip", "date", "time", "zone", "cik", "accession", "doc", "code", "filesize", "idx",
+                 "norefer", "noagent", "find", "crawler", "browser"]
+
+    for i, name in enumerate(col_names):
+        df_complete = df_complete.withColumnRenamed(f"_c{i}", name)
+
+    df_complete.show()
